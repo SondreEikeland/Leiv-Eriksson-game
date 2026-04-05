@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leiv Eriksson – Seil mot Verdens Ende</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0d0b07; --parchment:#f0e6cc; --parchment2:#d9c99a;
+  --gold:#c8921e; --gold2:#e8b84b; --sea:#1a3d5c; --sea2:#2a6090;
+  --blood:#7a1515; --green:#2a5c2a; --rune:#8a7040;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--parchment);font-family:'EB Garamond',serif;font-size:18px;min-height:100vh;overflow-x:hidden;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ══════════ INTRO ══════════ */
+#intro{align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;}
+.intro-bg{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 60%,#1a2e45 0%,var(--ink) 70%);}
+.stars-layer{position:absolute;inset:0;pointer-events:none;}
+.sd{position:absolute;background:var(--parchment);border-radius:50%;animation:tw var(--d,3s) ease-in-out infinite var(--dl,0s);}
+@keyframes tw{0%,100%{opacity:var(--a,.3)}50%{opacity:var(--b,.9)}}
+
+/* Ocean waves intro */
+.ocean-intro{position:absolute;bottom:0;left:0;right:0;height:180px;overflow:hidden;}
+.ow{position:absolute;bottom:0;width:200%;height:100%;animation:wm var(--ws,9s) linear infinite;}
+@keyframes wm{to{transform:translateX(-50%);}}
+.ow svg{width:100%;height:100%;}
+
+/* Intro ship */
+.intro-ship-wrap{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);animation:shipbob 5s ease-in-out infinite;}
+@keyframes shipbob{0%,100%{transform:translateX(-50%) translateY(0) rotate(-1deg)}50%{transform:translateX(-50%) translateY(-12px) rotate(1deg)}}
+
+.intro-inner{position:relative;z-index:2;max-width:640px;padding:2rem;}
+.intro-rune{font-size:2.2rem;letter-spacing:.9rem;color:var(--rune);margin-bottom:1.2rem;opacity:.55;}
+#intro h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(2.4rem,7vw,5rem);line-height:1.05;color:var(--parchment);text-shadow:0 0 80px rgba(200,146,30,.4);margin-bottom:.4rem;}
+.intro-sub{font-family:'Cinzel',serif;font-size:clamp(.7rem,1.8vw,.9rem);letter-spacing:.3em;color:var(--gold2);margin-bottom:1.2rem;}
+.intro-tag{font-style:italic;opacity:.72;margin-bottom:2.2rem;font-size:1rem;line-height:1.7;}
+.btn-start{display:inline-block;cursor:pointer;font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.2em;color:var(--ink);background:var(--gold);border:none;padding:.9rem 3rem;clip-path:polygon(8px 0%,calc(100% - 8px) 0%,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0% calc(100% - 8px),0% 8px);transition:background .2s,transform .2s;box-shadow:0 0 30px rgba(200,146,30,.4);}
+.btn-start:hover{background:var(--gold2);transform:scale(1.05);}
+
+/* ══════════ GAME SCREEN ══════════ */
+#game{flex-direction:column;position:relative;min-height:100vh;overflow:hidden;}
+
+/* Animated scene background */
+#scene-bg{position:fixed;inset:0;z-index:0;transition:opacity .8s;}
+
+/* Ocean scene */
+.bg-ocean{background:linear-gradient(180deg,#0a1520 0%,#0e2035 40%,#1a3d5c 100%);}
+.bg-forest{background:linear-gradient(180deg,#050e08 0%,#0a1f10 40%,#0f2e18 100%);}
+.bg-storm{background:linear-gradient(180deg,#050508 0%,#0f0f18 40%,#1a1a30 100%);}
+.bg-snow{background:linear-gradient(180deg,#08101a 0%,#0e1e2e 40%,#1a2e40 100%);}
+.bg-village{background:linear-gradient(180deg,#0a0806 0%,#1a1208 40%,#2a1e10 100%);}
+.bg-battle{background:linear-gradient(180deg,#0d0505 0%,#1a0808 40%,#2a1010 100%);}
+
+/* Scene canvas for particle effects */
+#scene-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+/* Leiv character area */
+#leiv-stage{position:fixed;bottom:0;left:0;right:0;height:260px;z-index:2;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;}
+#leiv-svg{width:140px;height:240px;transition:transform .5s;}
+
+/* Game UI overlay */
+#game-ui{position:relative;z-index:10;display:flex;flex-direction:column;min-height:100vh;}
+
+/* Top bar */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.5rem;background:rgba(13,11,7,.85);border-bottom:1px solid rgba(200,146,30,.2);backdrop-filter:blur(4px);}
+.top-loc{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold);opacity:.8;}
+.top-stats{display:flex;gap:1.2rem;align-items:center;}
+.ts{display:flex;align-items:center;gap:.5rem;}
+.ts-icon{font-size:1rem;}
+.ts-bar{width:60px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.ts-fill{height:100%;border-radius:3px;transition:width .6s;}
+.ts-fill.fame{background:linear-gradient(to right,var(--gold),var(--gold2));}
+.ts-fill.crew{background:linear-gradient(to right,#3a8a3a,#6ac46a);}
+.ts-fill.courage{background:linear-gradient(to right,var(--blood),#d44);}
+
+/* Chapter title card */
+.ch-card{padding:1.2rem 1.8rem .6rem;background:rgba(13,11,7,.7);backdrop-filter:blur(4px);}
+.ch-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.4em;color:var(--gold);opacity:.65;margin-bottom:.25rem;}
+.ch-title{font-family:'Cinzel',serif;font-size:clamp(1.1rem,3vw,1.7rem);color:var(--parchment);font-weight:700;}
+.ch-year{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;color:var(--gold2);opacity:.6;}
+
+/* Leiv speech bubble */
+.speech-area{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:0 1.5rem 280px;}
+.speech-bubble{position:relative;background:rgba(13,11,7,.92);border:1px solid rgba(200,146,30,.35);backdrop-filter:blur(8px);padding:1.2rem 1.5rem;max-width:680px;margin:0 auto;width:100%;}
+.speech-bubble::after{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid rgba(200,146,30,.35);}
+.narrative-txt{font-style:italic;font-size:.95rem;line-height:1.75;opacity:.88;margin-bottom:.8rem;border-left:2px solid rgba(200,146,30,.3);padding-left:1rem;}
+.question-lbl{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.3em;color:var(--gold);opacity:.65;margin-bottom:.3rem;}
+.question-txt{font-family:'Cinzel',serif;font-size:.95rem;color:var(--parchment);line-height:1.45;}
+
+/* Choices panel */
+.choices-panel{background:rgba(13,11,7,.88);backdrop-filter:blur(8px);border-top:1px solid rgba(200,146,30,.18);padding:1rem 1.5rem 1.2rem;}
+.choices-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;max-width:680px;margin:0 auto;}
+.choice-btn{cursor:pointer;background:rgba(200,146,30,.07);border:1px solid rgba(200,146,30,.25);color:var(--parchment);font-family:'EB Garamond',serif;font-size:.9rem;padding:.75rem 1rem;text-align:left;transition:all .2s;display:flex;gap:.6rem;align-items:flex-start;position:relative;overflow:hidden;}
+.choice-btn:hover:not(.disabled){background:rgba(200,146,30,.14);border-color:var(--gold);transform:translateY(-2px);}
+.choice-btn.correct{border-color:#4a4!important;background:rgba(40,120,40,.2)!important;color:#9de09d;}
+.choice-btn.wrong{border-color:var(--blood)!important;background:rgba(120,20,20,.2)!important;color:#e08080;}
+.choice-btn.disabled{pointer-events:none;opacity:.55;}
+.ch-letter{font-family:'Cinzel',serif;font-size:.75rem;color:var(--gold);min-width:1.2rem;margin-top:.05rem;}
+
+/* Feedback */
+.feedback-bar{display:none;max-width:680px;margin:.6rem auto 0;padding:.8rem 1.1rem;border:1px solid;font-size:.88rem;line-height:1.65;}
+.feedback-bar.correct{border-color:#4a4;background:rgba(40,120,40,.12);color:#9de09d;}
+.feedback-bar.wrong{border-color:var(--blood);background:rgba(120,20,20,.12);color:#e08080;}
+.feedback-bar.show{display:block;animation:fdin .4s ease;}
+@keyframes fdin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.next-row{display:none;justify-content:center;margin-top:.6rem;}
+.next-row.show{display:flex;animation:fdin .3s ease;}
+.next-btn{cursor:pointer;font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.2em;color:var(--ink);background:var(--gold);border:none;padding:.65rem 2.2rem;clip-path:polygon(6px 0%,calc(100% - 6px) 0%,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0% calc(100% - 6px),0% 6px);transition:background .2s,transform .2s;}
+.next-btn:hover{background:var(--gold2);transform:scale(1.04);}
+
+/* Progress dots */
+.prog-row{display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.5rem;background:rgba(13,11,7,.7);}
+.pd{width:9px;height:9px;border-radius:50%;background:rgba(200,146,30,.2);transition:background .4s;}
+.pd.done{background:var(--gold);}
+.pd.cur{background:var(--gold2);animation:pdpulse 1.5s ease-in-out infinite;}
+@keyframes pdpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+
+/* ══════════ END ══════════ */
+#end{align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse 80% 70% at 50% 50%,#1a2e10 0%,var(--ink) 70%);}
+.end-inner{max-width:580px;padding:3rem 2rem;}
+.end-rune{font-size:2.5rem;letter-spacing:.8rem;color:var(--gold);margin-bottom:1rem;opacity:.5;}
+#end h2{font-family:'Cinzel',serif;font-size:clamp(1.8rem,5vw,3rem);color:var(--parchment);margin-bottom:.8rem;}
+.end-score-txt{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold2);margin-bottom:1.2rem;letter-spacing:.1em;}
+.final-stats{display:flex;justify-content:center;gap:2.5rem;margin-bottom:1.5rem;}
+.fs-num{font-family:'Cinzel',serif;font-size:2rem;color:var(--gold);display:block;}
+.fs-lbl{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;opacity:.6;}
+.end-verdict{font-style:italic;font-size:1rem;opacity:.8;line-height:1.75;margin-bottom:2rem;}
+.btn-restart{cursor:pointer;font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.2em;color:var(--ink);background:var(--gold);border:none;padding:.8rem 2.5rem;clip-path:polygon(6px 0%,calc(100% - 6px) 0%,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0% calc(100% - 6px),0% 6px);transition:background .2s;}
+.btn-restart:hover{background:var(--gold2);}
+
+@media(max-width:600px){
+  .choices-grid{grid-template-columns:1fr;}
+  .top-stats{gap:.6rem;}
+  .ts-bar{width:40px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ INTRO ══════════ -->
+<div class="screen active" id="intro">
+  <div class="intro-bg"></div>
+  <div class="stars-layer" id="stars"></div>
+  <div class="ocean-intro">
+    <div class="ow" style="--ws:10s"><svg viewBox="0 0 1440 180" preserveAspectRatio="none"><path fill="#1a3d5c" fill-opacity=".4" d="M0,90 C360,140 720,40 1080,90 C1260,115 1380,65 1440,90 L1440,180 L0,180Z"/><path fill="#1a3d5c" fill-opacity=".25" d="M0,110 C280,70 560,140 840,110 C1120,80 1300,120 1440,105 L1440,180 L0,180Z"/></svg></div>
+    <div class="ow" style="--ws:16s;animation-direction:reverse"><svg viewBox="0 0 1440 180" preserveAspectRatio="none"><path fill="#0d1a28" fill-opacity=".85" d="M0,120 C240,80 480,150 720,120 C960,90 1200,130 1440,115 L1440,180 L0,180Z"/></svg></div>
+  </div>
+  <div class="intro-ship-wrap">
+    <svg width="320" height="70" viewBox="0 0 320 70">
+      <path d="M15 44 Q60 56 160 52 Q248 49 300 40 Q308 37 307 33 Q295 27 160 30 Q60 33 12 37Z" fill="#c8921e" opacity=".8"/>
+      <path d="M300 37 Q310 30 318 22 Q314 18 306 21 Q303 15 309 11 Q300 9 296 16 Q290 12 292 22 Q286 26 300 37Z" fill="#c8921e" opacity=".8"/>
+      <path d="M12 37 Q4 33 1 26 Q3 22 8 24 Q6 18 12 21 Q13 27 15 44Z" fill="#c8921e" opacity=".8"/>
+      <line x1="160" y1="30" x2="160" y2="-5" stroke="#c8921e" stroke-width="2" opacity=".7"/>
+      <path d="M160 -2 Q192 9 192 26 Q160 29 160 26Z" fill="#e8b84b" opacity=".5"/>
+      <path d="M160 -2 Q128 9 128 26 Q160 29 160 26Z" fill="#e8b84b" opacity=".35"/>
+    </svg>
+  </div>
+  <div class="intro-inner">
+    <div class="intro-rune">ᚱ ᚢ ᚾ ᛖ ᚱ</div>
+    <h1>Leiv Eriksson</h1>
+    <div class="intro-sub">Seil mot Verdens Ende</div>
+    <p class="intro-tag">Du er Leiv Eriksson. Ta de rette valgene og svar på utfordringene.<br>Klarer du å nå Vinland?</p>
+    <button class="btn-start" onclick="startGame()">⚓ &nbsp; START REISEN</button>
+  </div>
+</div>
+
+<!-- ══════════ GAME ══════════ -->
+<div class="screen" id="game">
+  <div id="scene-bg" class="bg-ocean"></div>
+  <canvas id="scene-canvas"></canvas>
+  <div id="leiv-stage"><svg id="leiv-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Leiv character SVG - animated viking -->
+    <!-- Legs -->
+    <rect id="leg-l" x="38" y="140" width="12" height="40" rx="5" fill="#8B5E3C"/>
+    <rect id="leg-r" x="50" y="140" width="12" height="40" rx="5" fill="#8B5E3C"/>
+    <!-- Boot L -->
+    <ellipse cx="44" cy="179" rx="9" ry="5" fill="#3a2a1a"/>
+    <!-- Boot R -->
+    <ellipse cx="56" cy="179" rx="9" ry="5" fill="#3a2a1a"/>
+    <!-- Tunic body -->
+    <rect x="30" y="85" width="40" height="60" rx="6" fill="#5a3a1a"/>
+    <!-- Belt -->
+    <rect x="30" y="125" width="40" height="6" rx="2" fill="#2a1a0a"/>
+    <circle cx="50" cy="128" r="3" fill="#c8921e"/>
+    <!-- Cape -->
+    <path d="M30 90 Q10 120 15 160 Q28 148 30 140 Z" fill="#8b2020" opacity=".85"/>
+    <!-- Arms -->
+    <rect id="arm-l" x="14" y="88" width="18" height="10" rx="5" fill="#5a3a1a" transform-origin="30 93"/>
+    <rect id="arm-r" x="68" y="88" width="18" height="10" rx="5" fill="#5a3a1a" transform-origin="70 93"/>
+    <!-- Hands -->
+    <circle cx="15" cy="93" r="5" fill="#c8a070"/>
+    <circle cx="85" cy="93" r="5" fill="#c8a070"/>
+    <!-- Neck -->
+    <rect x="44" y="72" width="12" height="16" rx="5" fill="#c8a070"/>
+    <!-- Head -->
+    <ellipse cx="50" cy="62" rx="20" ry="22" fill="#c8a070"/>
+    <!-- Beard -->
+    <path d="M34 72 Q38 90 50 88 Q62 90 66 72 Q58 82 50 80 Q42 82 34 72Z" fill="#8b6530"/>
+    <!-- Mustache -->
+    <path d="M38 70 Q50 76 62 70" stroke="#6a4a20" stroke-width="2.5" fill="none"/>
+    <!-- Eyes -->
+    <ellipse cx="43" cy="60" rx="3.5" ry="3" fill="white"/>
+    <ellipse cx="57" cy="60" rx="3.5" ry="3" fill="white"/>
+    <circle cx="44" cy="60" r="2" fill="#3a2a10"/>
+    <circle cx="58" cy="60" r="2" fill="#3a2a10"/>
+    <circle cx="44.7" cy="59.3" r=".7" fill="white"/>
+    <circle cx="58.7" cy="59.3" r=".7" fill="white"/>
+    <!-- Eyebrows -->
+    <path d="M40 55 Q43.5 52 47 54" stroke="#6a4a20" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M53 54 Q56.5 52 60 55" stroke="#6a4a20" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Nose -->
+    <path d="M49 63 Q47 68 50 70 Q53 68 51 63" stroke="#b08050" stroke-width="1.2" fill="none"/>
+    <!-- Helmet -->
+    <path d="M30 58 Q32 38 50 35 Q68 38 70 58 Z" fill="#6a6a6a"/>
+    <rect x="28" y="56" width="44" height="7" rx="3" fill="#7a7a7a"/>
+    <!-- Helmet nose guard -->
+    <rect x="47" y="60" width="6" height="12" rx="2" fill="#6a6a6a"/>
+    <!-- Helmet wings hint -->
+    <path d="M30 56 Q20 50 18 44 Q24 46 28 54Z" fill="#7a7a7a"/>
+    <path d="M70 56 Q80 50 82 44 Q76 46 72 54Z" fill="#7a7a7a"/>
+    <!-- Shield (right side) -->
+    <circle id="shield" cx="88" cy="105" r="16" fill="#8b2020" stroke="#c8921e" stroke-width="2"/>
+    <line x1="88" y1="89" x2="88" y2="121" stroke="#c8921e" stroke-width="1.5"/>
+    <line x1="72" y1="105" x2="104" y2="105" stroke="#c8921e" stroke-width="1.5"/>
+    <circle cx="88" cy="105" r="4" fill="#c8921e"/>
+    <!-- Axe (left side) -->
+    <line id="axe-handle" x1="12" y1="80" x2="12" y2="130" stroke="#6a4a20" stroke-width="3" stroke-linecap="round"/>
+    <path id="axe-head" d="M2 82 Q-2 95 4 100 Q10 95 12 85 Z" fill="#8a8a9a"/>
+  </svg></div>
+
+  <div id="game-ui">
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="top-loc" id="top-loc">Norge</div>
+      <div class="top-stats">
+        <div class="ts"><span class="ts-icon">⭐</span><div class="ts-bar"><div class="ts-fill fame" id="sf" style="width:20%"></div></div></div>
+        <div class="ts"><span class="ts-icon">⚓</span><div class="ts-bar"><div class="ts-fill crew" id="sc" style="width:100%"></div></div></div>
+        <div class="ts"><span class="ts-icon">🗡️</span><div class="ts-bar"><div class="ts-fill courage" id="sco" style="width:60%"></div></div></div>
+      </div>
+      <div class="prog-row" id="prog-row" style="background:transparent;padding:0;"></div>
+    </div>
+
+    <!-- Chapter header -->
+    <div class="ch-card">
+      <div class="ch-label" id="ch-label">KAPITTEL I</div>
+      <div class="ch-title" id="ch-title">...</div>
+      <div class="ch-year" id="ch-year"></div>
+    </div>
+
+    <!-- Speech + question -->
+    <div class="speech-area">
+      <div class="speech-bubble" style="max-width:680px;width:100%;">
+        <p class="narrative-txt" id="narrative-txt"></p>
+        <div class="question-lbl">⚔ SPØRSMÅL</div>
+        <div class="question-txt" id="question-txt"></div>
+      </div>
+    </div>
+
+    <!-- Choices -->
+    <div class="choices-panel">
+      <div class="choices-grid" id="choices-grid"></div>
+      <div class="feedback-bar" id="feedback-bar"></div>
+      <div class="next-row" id="next-row">
+        <button class="next-btn" id="next-btn" onclick="nextChapter()">Fortsett →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ END ══════════ -->
+<div class="screen" id="end">
+  <div class="end-inner">
+    <div class="end-rune">ᚢ ᛁ ᚾ ᛚ ᚨ ᚾ ᛞ</div>
+    <h2 id="end-title">Saga fullført!</h2>
+    <div class="end-score-txt" id="end-score-txt"></div>
+    <div class="final-stats">
+      <div><span class="fs-num" id="fs-c">0</span><span class="fs-lbl">RIKTIGE</span></div>
+      <div><span class="fs-num" id="fs-t">0</span><span class="fs-lbl">TOTALT</span></div>
+      <div><span class="fs-num" id="fs-f">0</span><span class="fs-lbl">BERØMMELSE</span></div>
+    </div>
+    <p class="end-verdict" id="end-verdict"></p>
+    <button class="btn-restart" onclick="restartGame()">↺ &nbsp; SPILL IGJEN</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// AUDIO ENGINE (Web Audio API – no files needed)
+// ══════════════════════════════════════════════
+let audioCtx = null;
+let bgGain = null;
+let bgSource = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  bgGain = audioCtx.createGain();
+  bgGain.gain.value = 0.18;
+  bgGain.connect(audioCtx.destination);
+}
+
+function playOceanLoop() {
+  if (!audioCtx) return;
+  stopBg();
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 4, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) {
+    // Low freq ocean rumble + white noise blend
+    d[i] = (Math.random() * 2 - 1) * 0.3 * Math.sin(i / 800) * 0.5
+           + Math.sin(i / 200) * 0.08
+           + (Math.random() * 2 - 1) * 0.12;
+  }
+  // Smooth the buffer for softer sound
+  for (let i = 2; i < d.length - 2; i++) d[i] = (d[i-2]+d[i-1]+d[i]+d[i+1]+d[i+2])/5;
+
+  bgSource = audioCtx.createBufferSource();
+  bgSource.buffer = buf;
+  bgSource.loop = true;
+
+  // Add a low-pass filter for warmth
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 400;
+
+  bgSource.connect(lp);
+  lp.connect(bgGain);
+  bgSource.start();
+}
+
+function playWindLoop() {
+  if (!audioCtx) return;
+  stopBg();
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 3, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) {
+    d[i] = (Math.random() * 2 - 1) * 0.4
+           * (0.5 + 0.5 * Math.sin(i / 1500))
+           * (0.7 + 0.3 * Math.sin(i / 400));
+  }
+  for (let i = 3; i < d.length - 3; i++) d[i] = (d[i-3]+d[i-1]+d[i]+d[i+1]+d[i+3])/5;
+  bgSource = audioCtx.createBufferSource();
+  bgSource.buffer = buf;
+  bgSource.loop = true;
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'bandpass';
+  hp.frequency.value = 800;
+  hp.Q.value = 0.5;
+  bgSource.connect(hp);
+  hp.connect(bgGain);
+  bgSource.start();
+}
+
+function playFireLoop() {
+  if (!audioCtx) return;
+  stopBg();
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) {
+    d[i] = (Math.random() * 2 - 1) * 0.35
+           * (0.6 + 0.4 * Math.sin(i / 300 + Math.random() * 0.5));
+  }
+  for (let i = 2; i < d.length - 2; i++) d[i] = (d[i-2]+d[i]+d[i+2])/3;
+  bgSource = audioCtx.createBufferSource();
+  bgSource.buffer = buf;
+  bgSource.loop = true;
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 600;
+  bgSource.connect(lp);
+  lp.connect(bgGain);
+  bgSource.start();
+}
+
+function stopBg() {
+  if (bgSource) { try { bgSource.stop(); } catch(e){} bgSource = null; }
+}
+
+function playSfx(type) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  if (type === 'correct') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3);
+    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+  } else {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.4);
+    g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+  }
+}
+
+// ══════════════════════════════════════════════
+// CANVAS PARTICLE SCENES
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('scene-canvas');
+const ctx2 = canvas.getContext('2d');
+let particles = [];
+let animId = null;
+let sceneType = 'ocean';
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+  constructor(type) {
+    this.type = type;
+    this.reset();
+  }
+  reset() {
+    const W = canvas.width, H = canvas.height;
+    if (this.type === 'wave') {
+      this.x = Math.random() * W;
+      this.y = H * 0.5 + Math.random() * H * 0.5;
+      this.vx = -0.4 - Math.random() * 0.8;
+      this.vy = (Math.random() - 0.5) * 0.3;
+      this.life = 1; this.maxLife = 60 + Math.random() * 80;
+      this.size = 1.5 + Math.random() * 3;
+      this.color = `rgba(42,96,144,`;
+    } else if (this.type === 'snow') {
+      this.x = Math.random() * W;
+      this.y = -10;
+      this.vx = (Math.random() - 0.5) * 0.8;
+      this.vy = 0.5 + Math.random() * 1.2;
+      this.life = 1; this.maxLife = 999;
+      this.size = 1 + Math.random() * 2.5;
+      this.color = `rgba(200,220,255,`;
+    } else if (this.type === 'ember') {
+      this.x = W * 0.3 + Math.random() * W * 0.4;
+      this.y = H * 0.6 + Math.random() * H * 0.3;
+      this.vx = (Math.random() - 0.5) * 0.6;
+      this.vy = -(0.5 + Math.random() * 1.5);
+      this.life = 1; this.maxLife = 50 + Math.random() * 60;
+      this.size = 1 + Math.random() * 2;
+      this.color = `rgba(220,120,30,`;
+    } else if (this.type === 'star') {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H * 0.6;
+      this.vx = 0; this.vy = 0;
+      this.life = Math.random(); this.maxLife = 1;
+      this.size = 0.5 + Math.random() * 1.5;
+      this.color = `rgba(240,230,200,`;
+      this.twinkleSpeed = 0.01 + Math.random() * 0.02;
+      this.twinkleDir = Math.random() > 0.5 ? 1 : -1;
+    } else if (this.type === 'leaf') {
+      this.x = Math.random() * W;
+      this.y = -20;
+      this.vx = (Math.random() - 0.5) * 1.2;
+      this.vy = 0.6 + Math.random() * 0.8;
+      this.life = 1; this.maxLife = 999;
+      this.size = 2 + Math.random() * 3;
+      this.rot = Math.random() * Math.PI * 2;
+      this.rotV = (Math.random() - 0.5) * 0.05;
+      this.color = `rgba(${60 + Math.floor(Math.random()*40)},${100 + Math.floor(Math.random()*60)},${30 + Math.floor(Math.random()*30)},`;
+    } else if (this.type === 'rain') {
+      this.x = Math.random() * W;
+      this.y = -20;
+      this.vx = 1 + Math.random();
+      this.vy = 8 + Math.random() * 5;
+      this.life = 1; this.maxLife = 999;
+      this.size = 1;
+      this.len = 8 + Math.random() * 12;
+      this.color = `rgba(120,160,200,`;
+    }
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.type === 'star') {
+      this.life += this.twinkleSpeed * this.twinkleDir;
+      if (this.life > 1 || this.life < 0) this.twinkleDir *= -1;
+      return;
+    }
+    if (this.type !== 'snow' && this.type !== 'leaf' && this.type !== 'rain') {
+      this.life -= 1 / this.maxLife;
+    }
+    const W = canvas.width, H = canvas.height;
+    if (this.y > H + 20 || this.x < -20 || this.x > W + 20 || this.life <= 0) this.reset();
+    if (this.type === 'leaf') this.rot += this.rotV;
+  }
+  draw(c) {
+    const alpha = Math.max(0, this.life);
+    if (this.type === 'rain') {
+      c.strokeStyle = this.color + '0.35)';
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(this.x, this.y);
+      c.lineTo(this.x + this.vx * 2, this.y + this.len);
+      c.stroke();
+    } else if (this.type === 'leaf') {
+      c.save();
+      c.translate(this.x, this.y);
+      c.rotate(this.rot);
+      c.fillStyle = this.color + '0.7)';
+      c.beginPath();
+      c.ellipse(0, 0, this.size, this.size * 0.5, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    } else {
+      c.fillStyle = this.color + alpha + ')';
+      c.beginPath();
+      c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      c.fill();
+    }
+  }
+}
+
+function setScene(type) {
+  sceneType = type;
+  particles = [];
+  const bg = document.getElementById('scene-bg');
+  bg.className = '';
+  if (type === 'ocean') {
+    bg.classList.add('bg-ocean');
+    for (let i = 0; i < 60; i++) particles.push(new Particle('wave'));
+    for (let i = 0; i < 80; i++) particles.push(new Particle('star'));
+    playOceanLoop();
+  } else if (type === 'snow') {
+    bg.classList.add('bg-snow');
+    for (let i = 0; i < 120; i++) { const p = new Particle('snow'); p.y = Math.random() * canvas.height; particles.push(p); }
+    for (let i = 0; i < 60; i++) particles.push(new Particle('star'));
+    playWindLoop();
+  } else if (type === 'forest') {
+    bg.classList.add('bg-forest');
+    for (let i = 0; i < 80; i++) { const p = new Particle('leaf'); p.y = Math.random() * canvas.height; particles.push(p); }
+    for (let i = 0; i < 40; i++) particles.push(new Particle('star'));
+    playFireLoop();
+  } else if (type === 'village') {
+    bg.classList.add('bg-village');
+    for (let i = 0; i < 40; i++) particles.push(new Particle('ember'));
+    for (let i = 0; i < 60; i++) particles.push(new Particle('star'));
+    playFireLoop();
+  } else if (type === 'storm') {
+    bg.classList.add('bg-storm');
+    for (let i = 0; i < 200; i++) { const p = new Particle('rain'); p.y = Math.random() * canvas.height; particles.push(p); }
+    playWindLoop();
+  } else if (type === 'battle') {
+    bg.classList.add('bg-battle');
+    for (let i = 0; i < 60; i++) particles.push(new Particle('ember'));
+    for (let i = 0; i < 30; i++) particles.push(new Particle('star'));
+    playFireLoop();
+  }
+  animateScene();
+}
+
+function animateScene() {
+  if (animId) cancelAnimationFrame(animId);
+  function loop() {
+    ctx2.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw ocean waves as lines in ocean/storm scenes
+    if (sceneType === 'ocean' || sceneType === 'storm') {
+      const H = canvas.height;
+      for (let w = 0; w < 4; w++) {
+        ctx2.strokeStyle = `rgba(42,96,144,${0.08 + w * 0.04})`;
+        ctx2.lineWidth = 1 + w;
+        ctx2.beginPath();
+        const yBase = H * (0.55 + w * 0.1) + Math.sin(Date.now() / (1200 + w * 300)) * 15;
+        for (let x = 0; x <= canvas.width; x += 4) {
+          const y = yBase + Math.sin(x / 80 + Date.now() / (900 + w * 200)) * (8 + w * 4);
+          x === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+        }
+        ctx2.stroke();
+      }
+    }
+
+    particles.forEach(p => { p.update(); p.draw(ctx2); });
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ══════════════════════════════════════════════
+// LEIV ANIMATIONS
+// ══════════════════════════════════════════════
+let leivAnimId = null;
+
+function animateLeiv(type) {
+  if (leivAnimId) clearInterval(leivAnimId);
+  const legL = document.getElementById('leg-l');
+  const legR = document.getElementById('leg-r');
+  const armL = document.getElementById('arm-l');
+  const armR = document.getElementById('arm-r');
+  const leivSvg = document.getElementById('leiv-svg');
+  const axe = document.getElementById('axe-handle');
+
+  let t = 0;
+  leivAnimId = setInterval(() => {
+    t += 0.05;
+    if (type === 'rowing') {
+      // Rowing animation
+      armL.setAttribute('transform', `rotate(${Math.sin(t) * 35},30,93)`);
+      armR.setAttribute('transform', `rotate(${Math.sin(t + Math.PI) * 35},70,93)`);
+      leivSvg.style.transform = `translateY(${Math.sin(t * 0.7) * 6}px)`;
+    } else if (type === 'walking') {
+      legL.setAttribute('transform', `rotate(${Math.sin(t) * 20},44,140)`);
+      legR.setAttribute('transform', `rotate(${Math.sin(t + Math.PI) * 20},56,140)`);
+      armL.setAttribute('transform', `rotate(${Math.sin(t + Math.PI) * 15},30,93)`);
+      armR.setAttribute('transform', `rotate(${Math.sin(t) * 15},70,93)`);
+      leivSvg.style.transform = `translateY(${Math.abs(Math.sin(t * 2)) * -4}px)`;
+    } else if (type === 'deciding') {
+      // Hand to chin, thinking
+      armL.setAttribute('transform', `rotate(${-30 + Math.sin(t * 0.5) * 5},30,93)`);
+      armR.setAttribute('transform', `rotate(${10 + Math.sin(t * 0.5) * 3},70,93)`);
+      leivSvg.style.transform = `translateY(${Math.sin(t * 0.4) * 3}px)`;
+    } else if (type === 'battle') {
+      armR.setAttribute('transform', `rotate(${Math.sin(t * 2) * 40},70,93)`);
+      armL.setAttribute('transform', `rotate(${Math.sin(t * 2 + 1) * 20},30,93)`);
+      leivSvg.style.transform = `translateX(${Math.sin(t * 2) * 4}px) translateY(${Math.abs(Math.sin(t)) * -3}px)`;
+    } else if (type === 'praying') {
+      armL.setAttribute('transform', `rotate(${-50 + Math.sin(t * 0.3) * 3},30,93)`);
+      armR.setAttribute('transform', `rotate(${50 + Math.sin(t * 0.3) * 3},70,93)`);
+      leivSvg.style.transform = `translateY(${Math.sin(t * 0.5) * 2}px)`;
+    } else {
+      // Idle bob
+      leivSvg.style.transform = `translateY(${Math.sin(t * 0.8) * 4}px)`;
+      armL.setAttribute('transform', `rotate(${Math.sin(t * 0.6) * 5},30,93)`);
+      armR.setAttribute('transform', `rotate(${Math.sin(t * 0.6 + 1) * 5},70,93)`);
+    }
+  }, 30);
+}
+
+// ══════════════════════════════════════════════
+// GAME DATA  (8 chapters, shuffled answers)
+// ══════════════════════════════════════════════
+const CHAPTERS = [
+  {
+    label:'Kapittel I — Island',
+    title:'Fødested: Island',
+    year:'Ca. 970 e.Kr.',
+    loc:'Island',
+    scene:'village',
+    leivAnim:'walking',
+    narrative:'Du, Leiv Eriksson, åpner øynene for første gang på Island – øya mellom ild og is. Faren din, Erik den Røde, er allerede en legendarisk og fryktet mann. Men Island er ikke trygt lenger – farlige nabotvister truer familien. Du vokser opp raskt.',
+    question:'Island ble kolonisert av norrøne vikinger. Hvem regnes som Islands første permanente bosetningsmann?',
+    choices:[
+      {text:'Ingólfr Arnarson, som slo seg ned ved Reykjavik rundt år 874.',correct:true},
+      {text:'Flóki Vilgerðarson, som ga øya navnet «Island».',correct:false},
+      {text:'Erik den Røde, Leivs far, som oppdaget øya på flukt fra Norge.',correct:false},
+      {text:'Harald Hårfagre, som sendte vikinger vestover.',correct:false}
+    ],
+    cf:'🏔️ Rett! Ingólfr Arnarson er Islands far – han slo seg ned ved Reykjavik rundt 874 e.Kr. Flóki ga riktignok øya navnet, men dro tilbake igjen.',
+    wf:'✗ Nær, men feil. Det var Ingólfr Arnarson som ble Islands første permanente bosetningsmann rundt år 874, ikke Flóki (som navnga den) eller Erik.'
+  },
+  {
+    label:'Kapittel II — Forvisning',
+    title:'Erik den Røde forvist',
+    year:'Ca. 982 e.Kr.',
+    loc:'Island',
+    scene:'battle',
+    leivAnim:'battle',
+    narrative:'Ulykkesdagen kommer. Din far Erik den Røde dreper to menn i en blodig nabotvist. Tinget dømmer ham: forvist fra Island i tre år. Som sønn på 12 år ser du faren din seile ut i det ukjente. Hva gjør en mann på flukt?',
+    question:'Hva var den offisielle grunnen til at Erik den Røde ble forvist fra Island?',
+    choices:[
+      {text:'Han drepte to menn i en tvist om eiendom og slaver.',correct:true},
+      {text:'Han stjal skip fra naboene og rømte med dem.',correct:false},
+      {text:'Han nektet å la seg kristne av misjonsfolk.',correct:false},
+      {text:'Han utfordret Islands høvding til holmgang og tapte.',correct:false}
+    ],
+    cf:'🪓 Rett! Erik drepte to menn i en nabotvist – trolig om slaver og eiendom. Tinget dømte ham til tre års eksil, og det var nettopp under disse tre årene han oppdaget og utforsket Grønland.',
+    wf:'✗ Feil. Erik den Røde ble forvist i tre år etter å ha drept to menn i en nabotvist om eiendom. Det var under dette eksil han fant Grønland.'
+  },
+  {
+    label:'Kapittel III — Grønland',
+    title:'Det grønne landet',
+    year:'Ca. 985 e.Kr.',
+    loc:'Grønland',
+    scene:'snow',
+    leivAnim:'walking',
+    narrative:'Faren din kaller det «Grønland» – et strategisk navn for å lokke settlere. Du seiler med ham i den store kolonisasjonsflåten: 25 skip la ut, bare 14 nådde frem. Du slår deg ned ved Brattahlid. Men himmelen er videre enn noen gang – og det er mer land der ute.',
+    question:'Grønland fikk navnet sitt av Erik den Røde. Hva var den egentlige hensikten med å kalle det «Grønland»?',
+    choices:[
+      {text:'Han ville lokke folk til å flytte dit – et markedsføringstriks for å rekruttere settlere til kolonien.',correct:true},
+      {text:'Sørsiden av Grønland hadde faktisk mye frodig, grønt land langs fjordene.',correct:false},
+      {text:'«Grønn» betydde «lovende» på norrønt, og var et religiøst symbol på håp.',correct:false},
+      {text:'Han oppkalte landet etter sin mor, hvis navn betydde «det grønne».',correct:false}
+    ],
+    cf:'🧊 Rett! Det var et PR-triks! Erik ville ha folk til å flytte dit, og «Grønland» låt mer innbydende enn «isøde». Faktisk har Grønland grønne fjordstrøk i sør, men navnet var absolutt ment som markedsføring.',
+    wf:'✗ Svaret er delvis sant (det finnes grønne fjordstrøk), men sagaene er tydelige: Erik valgte navnet bevisst for å gjøre landet attraktivt for settlere – det var et rekrutteringsgrep.'
+  },
+  {
+    label:'Kapittel IV — Norge og troen',
+    title:'Kong Olavs hoff i Nidaros',
+    year:'Ca. 999–1000 e.Kr.',
+    loc:'Nidaros, Norge',
+    scene:'village',
+    leivAnim:'praying',
+    narrative:'Du har seilt til Norge – en lang reise for en grønlender. Ved kong Olav Tryggvasons prunkende hoff i Nidaros skjer noe som forandrer deg. Du omvender deg til kristendommen og får et oppdrag: bringe den nye troen til Grønland. Men hva koster det å bytte gud?',
+    question:'Kong Olav Tryggvason var kjent for sin kristningsmisjon. Hvordan døde han?',
+    choices:[
+      {text:'Han falt i sjøslaget ved Svolder år 1000 – omringet av fiender hoppet han over bord og druknet.',correct:true},
+      {text:'Han ble forgiftet av en rivaliserende norsk jarl ved et gjestebud.',correct:false},
+      {text:'Han døde fredeligt av sykdom i Nidaros etter å ha kristnet hele Norge.',correct:false},
+      {text:'Han falt i kamp mot vikinger fra Danmark som invaderte Norge.',correct:false}
+    ],
+    cf:'⚔️ Rett! Olav tapte sjøslaget ved Svolder mot en koalisjon av fiender (dansk og svensk konge + jarl Eirik). Fremfor å overgi seg hoppet han over bord i full rustning. Samme år som Leiv oppdaget Vinland.',
+    wf:'✗ Feil. Olav Tryggvason falt dramatisk i sjøslaget ved Svolder år 1000 – omringet av fiender valgte han å hoppe over bord i full rustning fremfor å overgi seg.'
+  },
+  {
+    label:'Kapittel V — Bjarnis fortelling',
+    title:'Kjøpmannen som ikke landet',
+    year:'Ca. 1000 e.Kr.',
+    loc:'Grønland',
+    scene:'ocean',
+    leivAnim:'deciding',
+    narrative:'Tilbake på Grønland møter du en kjøpmann ved navn Bjarni Herjólfsson – mannen som for år siden ble blåst av kurs og skimtet ukjent land i vest. Han gikk aldri i land. Du kjøper skipet hans, samler 35 mann, og snur baugen vestover. Hjertet banker. Dette kan koste deg livet.',
+    question:'Hva er riktig rekkefølge på de tre landene Leiv oppdaget på reisen vestover?',
+    choices:[
+      {text:'Helluland (steinete) → Markland (skogrikt) → Vinland (frodig med druer)',correct:true},
+      {text:'Vinland → Markland → Helluland',correct:false},
+      {text:'Markland → Helluland → Vinland',correct:false},
+      {text:'Helluland → Vinland → Markland',correct:false}
+    ],
+    cf:'⛵ Rett! Rekkefølgen fra nord til sør: Helluland («steinhellenes land» – trolig Baffin Island), Markland («skogens land» – trolig Labrador), og til slutt Vinland («vinlandets land» – trolig Newfoundland).',
+    wf:'✗ Feil rekkefølge. De reiste sørover: først Helluland (steinøde, trolig Baffin Island), deretter Markland (skogrikt, trolig Labrador), og til slutt det frodige Vinland.'
+  },
+  {
+    label:'Kapittel VI — Vinland',
+    title:'Amerika! Vinland funnet',
+    year:'Ca. 1000–1001 e.Kr.',
+    loc:"Vinland (Newfoundland)",
+    scene:'forest',
+    leivAnim:'walking',
+    narrative:'Landet åpenbarer seg: grønne enger, laks i elvene, og det mannskapet kaller «druer» eller bær. Dere bygger langhus og overvintrer. Du er den første europeeren som beviselig satte fot på nordamerikansk kontinent. Men du vet ikke det. For deg er dette bare nytt land.',
+    question:"Hvilket arkeologisk funn beviser at norrøne vikinger faktisk nådde Amerika rundt år 1000?",
+    choices:[
+      {text:"L'Anse aux Meadows på Newfoundland – norrøne hustufter og gjenstander, oppdaget på 1960-tallet.",correct:true},
+      {text:'Kensington-runesteinen i Minnesota – en stein med norrøne runer fra 1300-tallet funnet i 1898.',correct:false},
+      {text:'Vinlandskartet – et gammelt kart som viser Amerika, funnet i Yale-biblioteket i 1957.',correct:false},
+      {text:'Et vikingsverd funnet i Maine, USA, i 1930-årene.',correct:false}
+    ],
+    cf:"🏆 Rett! L'Anse aux Meadows er det eneste vitenskapelig bekreftede beviset. Helge og Anne Stine Ingstad oppdaget ruinene i 1960. Kensington-steinen og Vinlandskartet regnes som forfalskninger av de fleste historikere.",
+    wf:"✗ Feil. Kensington-steinen og Vinlandskartet regnes av de fleste historikere som forfalskninger. Det eneste solide beviset er L'Anse aux Meadows på Newfoundland – ekte norrøne hustufter datert til ca. år 1000."
+  },
+  {
+    label:'Kapittel VII — Skrælingene',
+    title:'Møtet med urfolket',
+    year:'Ca. 1001 e.Kr.',
+    loc:"Vinland",
+    scene:'forest',
+    leivAnim:'deciding',
+    narrative:'Mannskapet rapporterer: fremmede menn i kanoer nærmer seg. Dere er ikke alene. Sagaene kaller dem «skrælinger». Dette er ditt valg – du er høvdingen. Krig? Handel? Flukt? Fremtiden til kolonien avhenger av det.',
+    question:'Hva kaller norrøne sagaer urbefolkningen de møtte i Vinland?',
+    choices:[
+      {text:'Skrælinger – et norrønt ord brukt om urfolk i både Vinland og Grønland.',correct:true},
+      {text:'Villmenn – et direkte norrønt ord for ukjente folk fra skogen.',correct:false},
+      {text:'Hvite bjørners folk – fordi de kom fra iskalde strøk.',correct:false},
+      {text:'Skogfolk – fordi de levde i de tette skogene langs kysten.',correct:false}
+    ],
+    cf:'👥 Rett! «Skrælinger» er det norrøne begrepet – trolig brukt nedsettende, men vi vet ikke nøyaktig hva det betød. Det samme ordet ble brukt om inuitter på Grønland. De møtte trolig forløperne til Mi\'kmaq- eller Beothuk-folket.',
+    wf:'✗ Feil. Norrøne sagaer bruker konsekvent ordet «skrælinger» om urfolket de møtte i Vinland – et begrep som trolig var nedsettende, og som også ble brukt om inuitter på Grønland.'
+  },
+  {
+    label:'Kapittel VIII — Arven',
+    title:'Leiv den Lykkelige',
+    year:'Ca. 1002–1020 e.Kr.',
+    loc:'Grønland',
+    scene:'ocean',
+    leivAnim:'idle',
+    narrative:'Du returnerer til Grønland som helt. Underveis redder du mannskapet fra et forlist skip – og får kallenavnet «Leiv den Lykkelige». Du overtar som høvding etter faren. Vinland forblir et drømmeland – men ingen klarer å holde kolonien i live. 500 år senere gjenoppdager en mann ved navn Columbus det du fant.',
+    question:'Hva er den viktigste grunnen til at de norrøne koloniene i Vinland mislyktes og ble oppgitt?',
+    choices:[
+      {text:'Konflikter med urbefolkningen (skrælinger), mangel på folk og ressurser til å forsvare seg langt hjemmefra.',correct:true},
+      {text:'En stor storm ødela alle skipene og kolonistene kunne ikke komme hjem.',correct:false},
+      {text:'Druer og mat viste seg å være giftige og mange kolonister døde.',correct:false},
+      {text:'Kong Olav forbød videre reiser vestover av religiøse grunner.',correct:false}
+    ],
+    cf:'⚓ Rett! Sagaene beskriver tiltagende konflikter med skrælinger – urfolket var tallrike, lokalkjente og til slutt for farlige å kjempe mot. Kolonistene var rett og slett for få, for langt hjemmefra, og uten forsterkninger.',
+    wf:'✗ Feil. Sagaene peker klart på konflikter med urbefolkningen (skrælinger) som hovedgrunnen – kombinert med at de var for få og for langt fra Grønland til å få forsterkninger.'
+  }
+];
+
+// ══════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════
+let GS = { chapter:0, answered:false, correct:0, total:0, fame:20, crew:35, courage:60 };
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  initAudio();
+  GS = { chapter:0, answered:false, correct:0, total:0, fame:20, crew:35, courage:60 };
+  showScreen('game');
+  buildDots();
+  renderChapter(0);
+}
+
+function restartGame() { showScreen('intro'); stopBg(); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── DOTS ──
+function buildDots() {
+  const row = document.getElementById('prog-row');
+  row.innerHTML = '';
+  CHAPTERS.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className='pd'+(i===0?' cur':'');
+    d.id='pd'+i; row.appendChild(d);
+  });
+}
+function updateDots(i) {
+  CHAPTERS.forEach((_,j) => {
+    const d=document.getElementById('pd'+j);
+    if(!d)return;
+    d.className='pd'+(j<i?' done':j===i?' cur':'');
+  });
+}
+
+// ── STATS ──
+function updateStats() {
+  GS.fame=Math.max(0,Math.min(100,GS.fame));
+  GS.crew=Math.max(0,Math.min(35,GS.crew));
+  GS.courage=Math.max(0,Math.min(100,GS.courage));
+  document.getElementById('sf').style.width=GS.fame+'%';
+  document.getElementById('sc').style.width=(GS.crew/35*100)+'%';
+  document.getElementById('sco').style.width=GS.courage+'%';
+}
+
+// ── RENDER ──
+function renderChapter(idx) {
+  const ch = CHAPTERS[idx];
+  GS.answered = false;
+
+  // Header
+  document.getElementById('ch-label').textContent = ch.label;
+  document.getElementById('ch-title').textContent = ch.title;
+  document.getElementById('ch-year').textContent = ch.year;
+  document.getElementById('top-loc').textContent = '📍 '+ch.loc;
+
+  // Scene + Leiv
+  setScene(ch.scene);
+  animateLeiv(ch.leivAnim);
+  updateDots(idx);
+
+  // Narrative + question
+  document.getElementById('narrative-txt').textContent = ch.narrative;
+  document.getElementById('question-txt').textContent = ch.question;
+
+  // Shuffle choices
+  const shuffled = shuffle(ch.choices);
+  const letters = ['A','B','C','D'];
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = '';
+  shuffled.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.dataset.correct = c.correct;
+    btn.innerHTML = `<span class="ch-letter">${letters[i]}</span><span>${c.text}</span>`;
+    btn.onclick = () => selectChoice(btn, c.correct, idx);
+    grid.appendChild(btn);
+  });
+
+  // Reset feedback + next
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar';
+  fb.textContent = '';
+  const nr = document.getElementById('next-row');
+  nr.className = 'next-row';
+  document.getElementById('next-btn').textContent =
+    idx < CHAPTERS.length - 1 ? 'Fortsett reisen →' : 'Se resultater →';
+}
+
+function selectChoice(btn, isCorrect, chIdx) {
+  if (GS.answered) return;
+  GS.answered = true;
+  GS.total++;
+  initAudio();
+
+  const ch = CHAPTERS[chIdx];
+
+  // Disable all, show correct
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+
+  const fb = document.getElementById('feedback-bar');
+  if (isCorrect) {
+    GS.correct++;
+    btn.classList.add('correct');
+    fb.className = 'feedback-bar correct show';
+    fb.textContent = ch.cf;
+    GS.fame += 18; GS.courage += 10;
+    playSfx('correct');
+  } else {
+    btn.classList.add('wrong');
+    fb.className = 'feedback-bar wrong show';
+    fb.textContent = ch.wf;
+    GS.fame += 5; GS.courage -= 5; GS.crew -= 2;
+    playSfx('wrong');
+  }
+  updateStats();
+  document.getElementById('next-row').className = 'next-row show';
+}
+
+function nextChapter() {
+  GS.chapter++;
+  if (GS.chapter >= CHAPTERS.length) showEnd();
+  else renderChapter(GS.chapter);
+}
+
+function showEnd() {
+  stopBg();
+  if(leivAnimId) clearInterval(leivAnimId);
+  showScreen('end');
+  const pct = Math.round(GS.correct / GS.total * 100);
+  document.getElementById('fs-c').textContent = GS.correct;
+  document.getElementById('fs-t').textContent = GS.total;
+  document.getElementById('fs-f').textContent = GS.fame;
+
+  let title, score, verdict;
+  if (pct === 100) {
+    title='🏆 Leiv den Lykkelige!';
+    score=pct+'% – Fullkommen saga!';
+    verdict='Du svarte rett på alt og ledet mannskapet med glans gjennom alle utfordringer. Sagaene vil synge om deg i generasjoner. Du er verdig kallenavnet Leiv den Lykkelige!';
+  } else if (pct >= 75) {
+    title='⚔️ En ærverdig høvding!';
+    score=pct+'% – Sterk reise!';
+    verdict='Du nådde Vinland og lærte mye underveis. Noen valg var krevende, men du holdt kursen. Grønland kan være stolt av sin sønn.';
+  } else if (pct >= 50) {
+    title='🌊 Halvveis til Vinland';
+    score=pct+'% – God innsats!';
+    verdict='Reisen var tøff og havet krevde sin toll. Du nådde Vinland, men med arr. Les sagaene igjen og prøv på nytt – Vinland venter!';
+  } else {
+    title='💀 Havet tok deg...';
+    score=pct+'% – Prøv igjen!';
+    verdict='Vikingene sa: den som ikke lærer av havet, synker med det. Prøv igjen – neste gang navigerer du tryggere!';
+  }
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-score-txt').textContent = score;
+  document.getElementById('end-verdict').textContent = verdict;
+}
+
+// ── STARS ──
+const starsEl = document.getElementById('stars');
+for(let i=0;i<120;i++){
+  const s=document.createElement('div');
+  s.className='sd';
+  const sz=Math.random()*2.5+.5;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--a:${.1+Math.random()*.3};--b:${.5+Math.random()*.5};animation-delay:${Math.random()*5}s`;
+  starsEl.appendChild(s);
+}
+</script>
+</body>
+</html>
